@@ -1,0 +1,31 @@
+﻿@using System.Security.Claims;
+@{
+    var claimsIdentity = User.Identity as ClaimsIdentity;
+    if (claimsIdentity != null)
+    {
+        var role = claimsIdentity.FindFirst(ClaimTypes.Role);
+        ViewData["isUser"] = role?.Value == Roles.User;
+    }
+}
+
+@if (User.Identity.IsAuthenticated)
+{
+    if (ViewData["isUser"] as bool? == true)
+    {
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="ManageAccount">Hello @User.Identity?.Name!</a>
+        </li>
+    }
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Logout">Logout</a>
+    </li>
+}
+else
+{
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Register">Register</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Login">Login</a>
+    </li>
+}

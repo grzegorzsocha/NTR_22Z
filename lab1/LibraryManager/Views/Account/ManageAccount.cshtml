@@ -1,0 +1,38 @@
+﻿@model LibraryManager.Models.Account.ManageAccountViewModel
+
+@{
+    ViewData["Title"] = "Manage account";
+}
+
+<h3>@ViewData["Title"]</h3>
+
+<div class="alert alert-warning" role="alert">
+    <p>
+        <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
+    </p>
+</div>
+
+<div>
+    <div class="col-md-4">
+        <form asp-action="DeleteAccount">
+            @Html.AntiForgeryToken()
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <span class="text-danger">@TempData["ErrorMessage"]</span>
+            }
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" autocomplete="current-password" aria-required="true" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <button id="delete-submit" type="submit" class="w-100 btn btn-lg btn-danger form-button" disabled="@Model.HasBorrowedBooks">
+                Delete data and close my account
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
