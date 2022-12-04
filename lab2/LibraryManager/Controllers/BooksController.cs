@@ -39,7 +39,7 @@ namespace LibraryManager.Controllers
         public async Task<IActionResult> Reservations(string searchString)
         {
             var books = FileUtils.ReadFromFile<Book>(fileName);
-            books = books.Where(s => !string.IsNullOrEmpty(s.Reserved)).ToList();
+            books = books.Where(s => !s.Reserved.HasValue).ToList();
 
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -56,7 +56,7 @@ namespace LibraryManager.Controllers
         {
             var userName = HttpContextUtils.GetCurrentUsername(HttpContext);
             var books = FileUtils.ReadFromFile<Book>(fileName);
-            books = books.Where(s => s.User == userName && !string.IsNullOrEmpty(s.Reserved)).ToList();
+            books = books.Where(s => s.User == userName && !s.Reserved.HasValue).ToList();
 
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -73,7 +73,7 @@ namespace LibraryManager.Controllers
         public async Task<IActionResult> Borrowings(string searchString)
         {
             var books = FileUtils.ReadFromFile<Book>(fileName);
-            books = books.Where(s => !string.IsNullOrEmpty(s.Leased)).ToList();
+            books = books.Where(s => !s.Leased.HasValue).ToList();
 
             if (!string.IsNullOrEmpty(searchString))
             {

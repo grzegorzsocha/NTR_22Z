@@ -8,41 +8,37 @@
         public int Date { get; set; }
         public string Publisher { get; set; }
         public string User { get; set; }
-        public string Reserved { get; set; }
-        public string Leased { get; set; }
+        public DateTime? Reserved { get; set; }
+        public DateTime? Leased { get; set; }
 
         public void CancelReservation()
         {
-            Reserved = "";
+            Reserved = null;
             User = "";
         }
 
         public void MakeReservation(string userName)
         {
             User = userName;
-            Reserved = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd");
+            Reserved = DateTime.Now.AddDays(1).Date;
         }
 
         public void ReturnLease()
         {
             User = "";
-            Leased = "";
+            Leased = null;
         }
 
         public void MakeLease(string userName)
         {
             User = userName;
-            Reserved = "";
-            Leased = DateTime.Now.AddDays(14).ToString("yyyy-MM-dd");
+            Reserved = null;
+            Leased = DateTime.Now.AddDays(14).Date;
         }
 
         public bool IsReserved()
         {
-            if (Reserved == "")
-            {
-                return false;
-            }
-            return true;
+            return Reserved.HasValue;
         }
 
         public bool CanReserve()
@@ -52,11 +48,7 @@
 
         public bool IsLeased()
         {
-            if (Leased == "")
-            {
-                return false;
-            }
-            return true;
+            return Leased.HasValue;
         }
 
         public bool CanLease()

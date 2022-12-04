@@ -73,7 +73,7 @@ namespace LibraryManager.Controllers
         {
             var userName = HttpContextUtils.GetCurrentUsername(HttpContext);
             var books = FileUtils.ReadFromFile<Book>(booksFileName);
-            var hasBorrowed = books.Where(b => b.User == userName && !string.IsNullOrEmpty(b.Leased)).Any();
+            var hasBorrowed = books.Where(b => b.User == userName && !b.Leased.HasValue).Any();
             var objModel = new ManageAccountViewModel()
             {
                 HasBorrowedBooks = hasBorrowed
@@ -100,13 +100,13 @@ namespace LibraryManager.Controllers
                 }
 
                 var books = FileUtils.ReadFromFile<Book>(booksFileName);
-                var hasBorrowed = books.Where(b => b.User == userName && !string.IsNullOrEmpty(b.Leased)).Any();
+                var hasBorrowed = books.Where(b => b.User == userName && !b.Leased.HasValue).Any();
                 if (hasBorrowed)
                 {
                     ViewBag.Message = "User has borrowed books";
                     return RedirectToAction("ManageAccount");
                 }
-                var reserved = books.Where(b => b.User == userName && !string.IsNullOrEmpty(b.Reserved)).ToList();
+                var reserved = books.Where(b => b.User == userName && !b.Reserved.HasValue).ToList();
                 if (reserved.Any())
                 {
                     foreach (var book in reserved)
