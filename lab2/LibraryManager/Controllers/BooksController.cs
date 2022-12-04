@@ -1,35 +1,54 @@
-﻿using LibraryManager.Models;
+﻿using LibraryManager.Database;
+using LibraryManager.Models;
 using LibraryManager.Models.Books;
 using LibraryManager.Models.Entities;
 using LibraryManager.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManager.Controllers
 {
     [Authorize]
     public class BooksController : Controller
     {
-        private static string fileName = "books.json";
+        private readonly DataContext context;
 
-        private List<Book> SearchBooks(List<Book> books, string searchString)
+        public BooksController(DataContext context)
         {
-            searchString = searchString.ToLower();
-            return books
-                    .Where(s => s.Title.ToLower().Contains(searchString)
-                    || s.Author.ToLower().Contains(searchString)
-                    || s.Publisher.ToLower().Contains(searchString))
-                    .ToList();
+            this.context = context;
         }
+
+
+        private static IQueryable<Book> SearchBooks(IQueryable<Book> books, string searchString)
+        {
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                searchString = searchString.ToLower();
+                return books
+                        .Where(s => s.Title.ToLower().Contains(searchString)
+                        || s.Author.ToLower().Contains(searchString)
+                        || s.Publisher.ToLower().Contains(searchString));
+            }
+            return books;
+        }
+
+
+        private static Task<List<Book>> LoadBooks(IQueryable<Book> books)
+        {
+            return books
+                .OrderBy(s => s.Title)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
 
         public async Task<IActionResult> Index(string searchString)
         {
-            var books = FileUtils.ReadFromFile<Book>(fileName);
+            var bookQuery = context.Books.AsQueryable();
+            bookQuery = SearchBooks(bookQuery, searchString);
+            var books = await LoadBooks(bookQuery);
 
-            if (!string.IsNullOrEmpty(searchString))
-            {
-                books = SearchBooks(books, searchString);
-            }
             return View(new IndexViewModel()
             {
                 Books = books
@@ -38,14 +57,10 @@ namespace LibraryManager.Controllers
 
         public async Task<IActionResult> Reservations(string searchString)
         {
-            var books = FileUtils.ReadFromFile<Book>(fileName);
-            books = books.Where(s => !s.Reserved.HasValue).ToList();
+            var bookQuery = context.Books.Where(s => s.Reserved.HasValue);
+            bookQuery = SearchBooks(bookQuery, searchString);
+            var books = await LoadBooks(bookQuery);
 
-            if (!string.IsNullOrEmpty(searchString))
-            {
-                searchString = searchString.ToLower();
-                books = SearchBooks(books, searchString);
-            }
             return View(new IndexViewModel()
             {
                 Books = books
@@ -55,14 +70,10 @@ namespace LibraryManager.Controllers
         public async Task<IActionResult> MyReservations(string searchString)
         {
             var userName = HttpContextUtils.GetCurrentUsername(HttpContext);
-            var books = FileUtils.ReadFromFile<Book>(fileName);
-            books = books.Where(s => s.User == userName && !s.Reserved.HasValue).ToList();
+            var bookQuery = context.Books.Where(s => s.Username == userName && s.Reserved.HasValue);
+            bookQuery = SearchBooks(bookQuery, searchString);
+            var books = await LoadBooks(bookQuery);
 
-            if (!string.IsNullOrEmpty(searchString))
-            {
-                searchString = searchString.ToLower();
-                books = SearchBooks(books, searchString);
-            }
             return View(new IndexViewModel()
             {
                 Books = books
@@ -72,14 +83,10 @@ namespace LibraryManager.Controllers
         [Authorize(Policy = Policies.AdminOnly)]
         public async Task<IActionResult> Borrowings(string searchString)
         {
-            var books = FileUtils.ReadFromFile<Book>(fileName);
-            books = books.Where(s => !s.Leased.HasValue).ToList();
+            var bookQuery = context.Books.Where(s => s.Leased.HasValue);
+            bookQuery = SearchBooks(bookQuery, searchString);
+            var books = await LoadBooks(bookQuery);
 
-            if (!string.IsNullOrEmpty(searchString))
-            {
-                searchString = searchString.ToLower();
-                books = SearchBooks(books, searchString);
-            }
             return View(new IndexViewModel()
             {
                 Books = books
@@ -91,13 +98,12 @@ namespace LibraryManager.Controllers
         [Authorize(Policy = Policies.UserOnly)]
         public async Task<IActionResult> CancelReservation(int id)
         {
-            var books = FileUtils.ReadFromFile<Book>(fileName);
-            var book = books.FirstOrDefault(x => x.Id == id);
+            var book = await context.Books.FirstOrDefaultAsync(x => x.Id == id);
 
             if (book != null)
             {
                 book.CancelReservation();
-                FileUtils.WriteToFile<Book>(fileName, books);
+                await context.SaveChangesAsync();
             }
             return RedirectToAction("MyReservations");
         }
@@ -108,13 +114,12 @@ namespace LibraryManager.Controllers
         public async Task<IActionResult> MakeReservation(int id)
         {
             var userName = HttpContextUtils.GetCurrentUsername(HttpContext);
-            var books = FileUtils.ReadFromFile<Book>(fileName);
-            var book = books.FirstOrDefault(x => x.Id == id);
+            var book = await context.Books.FirstOrDefaultAsync(x => x.Id == id);
 
             if (book != null && book.CanReserve())
             {
                 book.MakeReservation(userName);
-                FileUtils.WriteToFile<Book>(fileName, books);
+                await context.SaveChangesAsync();
             }
             return RedirectToAction("Index");
         }
@@ -124,14 +129,13 @@ namespace LibraryManager.Controllers
         [Authorize(Policy = Policies.AdminOnly)]
         public async Task<IActionResult> BorrowBook(int id)
         {
-            var books = FileUtils.ReadFromFile<Book>(fileName);
-            var book = books.FirstOrDefault(x => x.Id == id);
-            var userName = book.User;
+            var book = await context.Books.FirstOrDefaultAsync(x => x.Id == id);
+            var userName = book.Username;
 
             if (book != null && book.CanLease())
             {
                 book.MakeLease(userName);
-                FileUtils.WriteToFile<Book>(fileName, books);
+                await context.SaveChangesAsync();
             }
             return RedirectToAction("Reservations");
         }
@@ -141,13 +145,12 @@ namespace LibraryManager.Controllers
         [Authorize(Policy = Policies.AdminOnly)]
         public async Task<IActionResult> ReturnBook(int id)
         {
-            var books = FileUtils.ReadFromFile<Book>(fileName);
-            var book = books.FirstOrDefault(x => x.Id == id);
+            var book = await context.Books.FirstOrDefaultAsync(x => x.Id == id);
 
             if (book != null)
             {
                 book.ReturnLease();
-                FileUtils.WriteToFile<Book>(fileName, books);
+                await context.SaveChangesAsync();
             }
             return RedirectToAction("Borrowings");
         }

@@ -6,8 +6,8 @@
     "Date": 2020,
     "Publisher": "Penguin Random House UK",
     "User": "",
-    "Reserved": "",
-    "Leased": ""
+    "Reserved": null,
+    "Leased": null
   },
   {
     "Id": 2,
@@ -16,8 +16,8 @@
     "Date": 2020,
     "Publisher": "Penguin Random House UK",
     "User": "",
-    "Reserved": "",
-    "Leased": ""
+    "Reserved": null,
+    "Leased": null
   },
   {
     "Id": 3,
@@ -25,9 +25,9 @@
     "Title": "The Great Gatsby",
     "Date": 1925,
     "Publisher": "Charles Scribner\u0027s Sons",
-    "User": "jeremy",
-    "Reserved": "2022-11-29",
-    "Leased": ""
+    "User": "",
+    "Reserved": null,
+    "Leased": null
   },
   {
     "Id": 4,
@@ -36,7 +36,7 @@
     "Date": 2003,
     "Publisher": "Doubleday US",
     "User": "",
-    "Reserved": "",
-    "Leased": ""
+    "Reserved": null,
+    "Leased": null
   }
 ]

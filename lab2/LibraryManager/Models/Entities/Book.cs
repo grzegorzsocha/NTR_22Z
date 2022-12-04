@@ -1,4 +1,6 @@
-﻿namespace LibraryManager.Models.Entities
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace LibraryManager.Models.Entities
 {
     public class Book
     {
@@ -7,33 +9,35 @@
         public string Title { get; set; }
         public int Date { get; set; }
         public string Publisher { get; set; }
-        public string User { get; set; }
+        public string? Username { get; set; }
+        [ForeignKey("Username")]
+        public User User { get; set; }
         public DateTime? Reserved { get; set; }
         public DateTime? Leased { get; set; }
 
         public void CancelReservation()
         {
             Reserved = null;
-            User = "";
+            Username = null;
         }
 
         public void MakeReservation(string userName)
         {
-            User = userName;
-            Reserved = DateTime.Now.AddDays(1).Date;
+            Username = userName;
+            Reserved = DateTime.UtcNow.AddDays(1).Date;
         }
 
         public void ReturnLease()
         {
-            User = "";
+            Username = null;
             Leased = null;
         }
 
         public void MakeLease(string userName)
         {
-            User = userName;
+            Username = userName;
             Reserved = null;
-            Leased = DateTime.Now.AddDays(14).Date;
+            Leased = DateTime.UtcNow.AddDays(14).Date;
         }
 
         public bool IsReserved()

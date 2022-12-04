@@ -1,4 +1,5 @@
-﻿using LibraryManager.Models;
+﻿using LibraryManager.Database;
+using LibraryManager.Models;
 using LibraryManager.Models.Account;
 using LibraryManager.Models.Entities;
 using LibraryManager.Utils;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace LibraryManager.Controllers
@@ -14,6 +16,12 @@ namespace LibraryManager.Controllers
     {
         private static string fileName = "users.json";
         private static string booksFileName = "books.json";
+        private readonly DataContext context;
+
+        public AccountController(DataContext context)
+        {
+            this.context = context;
+        }
 
         public IActionResult Login(string ReturnUrl = "/")
         {
@@ -25,7 +33,7 @@ namespace LibraryManager.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel objLoginModel)
         {
-            var users = FileUtils.ReadFromFile<User>(fileName);
+            var users = await context.Users.AsNoTracking().ToListAsync();
 
             if (ModelState.IsValid)
             {
@@ -69,11 +77,11 @@ namespace LibraryManager.Controllers
         }
 
         [Authorize(Policy = Policies.UserOnly)]
-        public IActionResult ManageAccount()
+        public async Task<IActionResult> ManageAccount()
         {
             var userName = HttpContextUtils.GetCurrentUsername(HttpContext);
-            var books = FileUtils.ReadFromFile<Book>(booksFileName);
-            var hasBorrowed = books.Where(b => b.User == userName && !b.Leased.HasValue).Any();
+            var books = await context.Books.AsNoTracking().ToListAsync();
+            var hasBorrowed = books.Where(b => b.Username == userName && !b.Leased.HasValue).Any();
             var objModel = new ManageAccountViewModel()
             {
                 HasBorrowedBooks = hasBorrowed
@@ -87,7 +95,7 @@ namespace LibraryManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAccount(string password)
         {
-            var users = FileUtils.ReadFromFile<User>(fileName);
+            var users = await context.Users.ToListAsync();
             var userName = HttpContextUtils.GetCurrentUsername(HttpContext);
             var user = users.FirstOrDefault(u => u.Username == userName);
 
@@ -99,24 +107,24 @@ namespace LibraryManager.Controllers
                     return RedirectToAction("ManageAccount");
                 }
 
-                var books = FileUtils.ReadFromFile<Book>(booksFileName);
-                var hasBorrowed = books.Where(b => b.User == userName && !b.Leased.HasValue).Any();
+                var books = await context.Books.ToListAsync();
+                var hasBorrowed = books.Where(b => b.Username == userName && !b.Leased.HasValue).Any();
                 if (hasBorrowed)
                 {
                     ViewBag.Message = "User has borrowed books";
                     return RedirectToAction("ManageAccount");
                 }
-                var reserved = books.Where(b => b.User == userName && !b.Reserved.HasValue).ToList();
+                var reserved = books.Where(b => b.Username == userName && !b.Reserved.HasValue).ToList();
                 if (reserved.Any())
                 {
                     foreach (var book in reserved)
                     {
                         book.CancelReservation();
                     }
-                    FileUtils.WriteToFile(booksFileName, books);
+                    await context.SaveChangesAsync();
                 }
                 users.Remove(user);
-                FileUtils.WriteToFile(fileName, users);
+                await context.SaveChangesAsync();
                 await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
                 return LocalRedirect("/");
             }
@@ -126,7 +134,7 @@ namespace LibraryManager.Controllers
         [HttpPost]
         public async Task<IActionResult> RegisterAccount(RegisterViewModel model)
         {
-            var users = FileUtils.ReadFromFile<User>(fileName);
+            var users = await context.Users.ToListAsync();
             var userName = HttpContextUtils.GetCurrentUsername(HttpContext);
             var user = users.FirstOrDefault(u => u.Username == model.Username);
 
@@ -148,7 +156,7 @@ namespace LibraryManager.Controllers
             };
 
             users.Add(newUser);
-            FileUtils.WriteToFile(fileName, users);
+            await context.SaveChangesAsync();
             return RedirectToAction("Login");
         }
     }
