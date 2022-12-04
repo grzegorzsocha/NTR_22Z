@@ -33,11 +33,13 @@ namespace LibraryManager.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel objLoginModel)
         {
-            var users = await context.Users.AsNoTracking().ToListAsync();
-
             if (ModelState.IsValid)
             {
-                var user = users.Where(x => x.Username == objLoginModel.Username && x.Password == objLoginModel.Password).FirstOrDefault();
+                var user = await context.Users
+                    .Where(x => x.Username == objLoginModel.Username && x.Password == objLoginModel.Password)
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync();
+
                 if (user == null)
                 {
                     ViewBag.Message = "Invalid Credential";
@@ -50,12 +52,15 @@ namespace LibraryManager.Controllers
                         new Claim(ClaimTypes.Name, user.Username),
                         new Claim(ClaimTypes.Role, user.IsAdmin ? Roles.Admin : Roles.User),
                     };
+
                     var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                     var principal = new ClaimsPrincipal(identity);
+                    
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, new AuthenticationProperties()
                     {
                         IsPersistent = objLoginModel.RememberLogin
                     });
+
                     return LocalRedirect(objLoginModel.ReturnUrl);
                 }
             }
@@ -95,9 +100,8 @@ namespace LibraryManager.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAccount(string password)
         {
-            var users = await context.Users.ToListAsync();
             var userName = HttpContextUtils.GetCurrentUsername(HttpContext);
-            var user = users.FirstOrDefault(u => u.Username == userName);
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Username == userName);
 
             if (user != null)
             {
@@ -109,12 +113,15 @@ namespace LibraryManager.Controllers
 
                 var books = await context.Books.ToListAsync();
                 var hasBorrowed = books.Where(b => b.Username == userName && !b.Leased.HasValue).Any();
+
                 if (hasBorrowed)
                 {
                     ViewBag.Message = "User has borrowed books";
                     return RedirectToAction("ManageAccount");
                 }
+
                 var reserved = books.Where(b => b.Username == userName && !b.Reserved.HasValue).ToList();
+
                 if (reserved.Any())
                 {
                     foreach (var book in reserved)
@@ -123,9 +130,12 @@ namespace LibraryManager.Controllers
                     }
                     await context.SaveChangesAsync();
                 }
-                users.Remove(user);
+
+                context.Users.Remove(user);
                 await context.SaveChangesAsync();
+
                 await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
                 return LocalRedirect("/");
             }
             return RedirectToAction("ManageAccount");
@@ -134,9 +144,8 @@ namespace LibraryManager.Controllers
         [HttpPost]
         public async Task<IActionResult> RegisterAccount(RegisterViewModel model)
         {
-            var users = await context.Users.ToListAsync();
             var userName = HttpContextUtils.GetCurrentUsername(HttpContext);
-            var user = users.FirstOrDefault(u => u.Username == model.Username);
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Username == model.Username);
 
             if (user != null)
             {
@@ -155,7 +164,7 @@ namespace LibraryManager.Controllers
                 Password = model.Password
             };
 
-            users.Add(newUser);
+            context.Users.Add(newUser);
             await context.SaveChangesAsync();
             return RedirectToAction("Login");
         }
