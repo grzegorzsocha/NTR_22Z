@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LibraryManager.Models.Entities
 {
@@ -12,8 +13,12 @@ namespace LibraryManager.Models.Entities
         public string? Username { get; set; }
         [ForeignKey("Username")]
         public User User { get; set; }
+        [DataType(DataType.Date)]
         public DateTime? Reserved { get; set; }
+        [DataType(DataType.Date)]
         public DateTime? Leased { get; set; }
+        [Timestamp]
+        public byte[] RowVersion { get; set; }
 
         public void CancelReservation()
         {
