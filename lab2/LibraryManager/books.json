@@ -1,0 +1,42 @@
+[
+  {
+    "Id": 1,
+    "Author": "Jeremy Clarkson",
+    "Title": "Can You Make This Thing Go Faster",
+    "Date": 2020,
+    "Publisher": "Penguin Random House UK",
+    "User": "",
+    "Reserved": "",
+    "Leased": ""
+  },
+  {
+    "Id": 2,
+    "Author": "Jeremy Clarkson",
+    "Title": "Diddly Squat - a Year on the Farm",
+    "Date": 2020,
+    "Publisher": "Penguin Random House UK",
+    "User": "",
+    "Reserved": "",
+    "Leased": ""
+  },
+  {
+    "Id": 3,
+    "Author": "F. Scott Fitzgerald",
+    "Title": "The Great Gatsby",
+    "Date": 1925,
+    "Publisher": "Charles Scribner\u0027s Sons",
+    "User": "jeremy",
+    "Reserved": "2022-11-29",
+    "Leased": ""
+  },
+  {
+    "Id": 4,
+    "Author": "Dan Brown",
+    "Title": "The Da Vinci Code",
+    "Date": 2003,
+    "Publisher": "Doubleday US",
+    "User": "",
+    "Reserved": "",
+    "Leased": ""
+  }
+]

@@ -1,0 +1,65 @@
+﻿@model LibraryManager.Models.Books.IndexViewModel
+
+@{
+    ViewData["Title"] = "My reservations";
+}
+
+<form asp-controller="Books" asp-action="MyReservations" method="get">
+    <p>
+        <input type="text" asp-for="SearchString" />
+        <input type="submit" value="Filter" />
+    </p>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Books[0].Title)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Books[0].Author)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Books[0].Date)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Books[0].Publisher)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Books[0].Reserved)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var book in Model.Books)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => book.Title)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => book.Author)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => book.Date)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => book.Publisher)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => book.Reserved)
+                </td>
+                <td>
+                    @using (Html.BeginForm("CancelReservation", "Books", null, FormMethod.Post, true, null))
+                    {
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" value="@book.Id" name="id" />
+                        <button class="btn btn-warning" asp-controller="Books" asp-action="CancelReservation">Cancel reservation</button>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
