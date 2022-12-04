@@ -1,5 +1,7 @@
+using LibraryManager.Database;
 using LibraryManager.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,11 +10,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(x => x.LoginPath = "/account/login");
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(Policies.AdminOnly, policy => policy.RequireClaim(ClaimTypes.Role, Roles.Admin));
     options.AddPolicy(Policies.UserOnly, policy => policy.RequireClaim(ClaimTypes.Role, Roles.User));
 });
+
+builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("libraryDatabase")));
 
 var app = builder.Build();
 

@@ -40,7 +40,7 @@ namespace LibraryManager.Controllers
                     var claims = new List<Claim>() {
                         new Claim(ClaimTypes.NameIdentifier, Convert.ToString(user.Username)),
                         new Claim(ClaimTypes.Name, user.Username),
-                        new Claim(ClaimTypes.Role, user.IsAdmin() ? Roles.Admin : Roles.User),
+                        new Claim(ClaimTypes.Role, user.IsAdmin ? Roles.Admin : Roles.User),
                     };
                     var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                     var principal = new ClaimsPrincipal(identity);
