@@ -17,9 +17,8 @@ namespace LibraryManager.Models.Entities
         public DateTime? Reserved { get; set; }
         [DataType(DataType.Date)]
         public DateTime? Leased { get; set; }
-        //[Timestamp]
-        //public byte[] RowVersion { get; set; }
-
+        [Timestamp]
+        public uint RowVersion { get; set; }
 
         public void CancelReservation()
         {
