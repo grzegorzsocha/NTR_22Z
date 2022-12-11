@@ -96,9 +96,9 @@ namespace LibraryManager.Controllers
         public async Task<IActionResult> CancelReservation(int id, uint rowVersion)
         {
             var userName = HttpContextUtils.GetCurrentUsername(HttpContext);
-            var book = await context.Books.FirstOrDefaultAsync(x => x.Id == id && x.Username == userName && x.Reserved.HasValue);
+            var book = await context.Books.FirstOrDefaultAsync(x => x.Id == id);
 
-            if (book != null)
+            if (book != null && book.IsReserved() && book.Username == userName)
             {
                 book.CancelReservation();
                 context.Entry(book).Property("RowVersion").OriginalValue = rowVersion;
@@ -134,7 +134,7 @@ namespace LibraryManager.Controllers
                 try
                 {
                     await context.SaveChangesAsync();
-                    await Task.Delay(5 * 1000);
+                    //await Task.Delay(5 * 1000); // For testing concurency
                 }
                 catch (DbUpdateConcurrencyException ex)
                 {
@@ -185,7 +185,7 @@ namespace LibraryManager.Controllers
         {
             var book = await context.Books.FirstOrDefaultAsync(x => x.Id == id);
 
-            if (book != null)
+            if (book != null && book.IsLeased())
             {
                 book.ReturnLease();
                 context.Entry(book).Property("RowVersion").OriginalValue = rowVersion;
