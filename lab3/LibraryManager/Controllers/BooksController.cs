@@ -19,7 +19,6 @@ namespace LibraryManager.Controllers
             this.context = context;
         }
 
-
         private static IQueryable<Book> SearchBooks(IQueryable<Book> books, string searchString)
         {
             if (!string.IsNullOrEmpty(searchString))
@@ -33,7 +32,6 @@ namespace LibraryManager.Controllers
             return books;
         }
 
-
         private static Task<List<Book>> LoadBooks(IQueryable<Book> books)
         {
             return books
@@ -41,7 +39,6 @@ namespace LibraryManager.Controllers
                 .AsNoTracking()
                 .ToListAsync();
         }
-
 
         public async Task<IActionResult> Index(string searchString)
         {
@@ -96,22 +93,36 @@ namespace LibraryManager.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = Policies.UserOnly)]
-        public async Task<IActionResult> CancelReservation(int id)
+        public async Task<IActionResult> CancelReservation(int id, uint rowVersion)
         {
-            var book = await context.Books.FirstOrDefaultAsync(x => x.Id == id);
+            var userName = HttpContextUtils.GetCurrentUsername(HttpContext);
+            var book = await context.Books.FirstOrDefaultAsync(x => x.Id == id && x.Username == userName && x.Reserved.HasValue);
 
             if (book != null)
             {
                 book.CancelReservation();
-                await context.SaveChangesAsync();
+                context.Entry(book).Property("RowVersion").OriginalValue = rowVersion;
+                try
+                {
+                    await context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    TempData["ErrorMessage"] = "Reservation has been changed by someone else";
+                }
             }
+            else
+            {
+                TempData["ErrorMessage"] = "Reservation not found";
+            }
+
             return RedirectToAction("MyReservations");
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = Policies.UserOnly)]
-        public async Task<IActionResult> MakeReservation(int id)
+        public async Task<IActionResult> MakeReservation(int id, uint rowVersion)
         {
             var userName = HttpContextUtils.GetCurrentUsername(HttpContext);
             var book = await context.Books.FirstOrDefaultAsync(x => x.Id == id);
@@ -119,15 +130,29 @@ namespace LibraryManager.Controllers
             if (book != null && book.CanReserve())
             {
                 book.MakeReservation(userName);
-                await context.SaveChangesAsync();
+                context.Entry(book).Property("RowVersion").OriginalValue = rowVersion;
+                try
+                {
+                    await context.SaveChangesAsync();
+                    await Task.Delay(5 * 1000);
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    TempData["ErrorMessage"] = "Reservation has been made by someone else";
+                }
             }
+            else
+            {
+                TempData["ErrorMessage"] = "Cannot reserve this book";
+            }
+
             return RedirectToAction("Index");
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = Policies.AdminOnly)]
-        public async Task<IActionResult> BorrowBook(int id)
+        public async Task<IActionResult> BorrowBook(int id, uint rowVersion)
         {
             var book = await context.Books.FirstOrDefaultAsync(x => x.Id == id);
             var userName = book.Username;
@@ -135,23 +160,49 @@ namespace LibraryManager.Controllers
             if (book != null && book.CanLease())
             {
                 book.MakeLease(userName);
-                await context.SaveChangesAsync();
+                context.Entry(book).Property("RowVersion").OriginalValue = rowVersion;
+                try
+                {
+                    await context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    TempData["ErrorMessage"] = "Book has been borrowed by someone else";
+                }
             }
+            else
+            {
+                TempData["ErrorMessage"] = "Cannot borrow this book";
+            }
+
             return RedirectToAction("Reservations");
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = Policies.AdminOnly)]
-        public async Task<IActionResult> ReturnBook(int id)
+        public async Task<IActionResult> ReturnBook(int id, uint rowVersion)
         {
             var book = await context.Books.FirstOrDefaultAsync(x => x.Id == id);
 
             if (book != null)
             {
                 book.ReturnLease();
-                await context.SaveChangesAsync();
+                context.Entry(book).Property("RowVersion").OriginalValue = rowVersion;
+                try
+                {
+                    await context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    TempData["ErrorMessage"] = "Borrowing has been already modified by someone else";
+                }
             }
+            else
+            {
+                TempData["ErrorMessage"] = "Book not found";
+            }
+
             return RedirectToAction("Borrowings");
         }
     }

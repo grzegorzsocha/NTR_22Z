@@ -4,6 +4,16 @@
     ViewData["Title"] = "My reservations";
 }
 
+@if (TempData["ErrorMessage"] != null)
+{
+    @* <span class="text-danger">@TempData["ErrorMessage"]</span>*@
+    <script type="text/javascript">
+        window.onload = function () {
+            alert("@TempData["ErrorMessage"]");
+        };
+    </script>
+}
+
 <form asp-controller="Books" asp-action="MyReservations" method="get">
     <p>
         <input type="text" asp-for="SearchString" />
@@ -55,7 +65,8 @@
                     @using (Html.BeginForm("CancelReservation", "Books", null, FormMethod.Post, true, null))
                     {
                         @Html.AntiForgeryToken()
-                        <input type="hidden" value="@book.Id" name="id" />
+                        <input type="hidden" asp-for="Id" value="@book.Id" />
+                        <input type="hidden" asp-for="RowVersion" value="@book.RowVersion" />
                         <button class="btn btn-warning" asp-controller="Books" asp-action="CancelReservation">Cancel reservation</button>
                     }
                 </td>

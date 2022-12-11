@@ -12,6 +12,15 @@
     }
 }
 
+@if (TempData["ErrorMessage"] != null)
+{
+    <script type="text/javascript">
+        window.onload = function () {
+            alert("@TempData["ErrorMessage"]");
+        };
+    </script>
+}
+
 <form asp-controller="Books" asp-action="Index" method="get">
     <p>
         <input type="text" asp-for="SearchString" />
@@ -72,7 +81,8 @@
                             @using (Html.BeginForm("MakeReservation", "Books", null, FormMethod.Post, true, null))
                             {
                                 @Html.AntiForgeryToken()
-                                <input type="hidden" value="@book.Id" name="id" />
+                                <input type="hidden" asp-for="Id" value="@book.Id" />
+                                <input type="hidden" asp-for="RowVersion" value="@book.RowVersion" />
                                 <button class="btn btn-warning" asp-controller="Books" asp-action="MakeReservation">Make a reservation</button>
                             }
                         </td>
