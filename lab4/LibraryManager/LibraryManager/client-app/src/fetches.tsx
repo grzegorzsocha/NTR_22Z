@@ -11,6 +11,8 @@ axios.interceptors.response.use(
         console.log(error.response.data);
         if (error.response.status === 401) {
             history.replace("/login");
+        } else if (error?.response?.data) {
+            window.alert(error?.response?.data);
         }
         return Promise.reject(error);
     }
@@ -27,11 +29,7 @@ export const login = async (
             password,
             rememberMe,
         })
-        .then((response) => true)
-        .catch(
-            (error) =>
-                error?.response?.data && window.alert(error?.response?.data)
-        );
+        .then((response) => true);
 };
 
 export const logout = async () => {
@@ -40,15 +38,11 @@ export const logout = async () => {
 };
 
 export const register = async (userName: string, password: string) => {
-    const response = await axios
-        .post("https://localhost:7126/account", {
-            userName,
-            password,
-        })
-        .catch(
-            (error) =>
-                error?.response?.data && window.alert(error?.response?.data)
-        );
+    const response = await axios.post("https://localhost:7126/account", {
+        userName,
+        password,
+    });
+
     response.status === 200
         ? alert("Account created")
         : alert("Failed to create account");
@@ -60,11 +54,7 @@ export const deleteAccount = async (password: string) => {
         .put("https://localhost:7126/account", {
             password,
         })
-        .then((response) => true)
-        .catch(
-            (error) =>
-                error?.response?.data && window.alert(error?.response?.data)
-        );
+        .then((response) => true);
 };
 
 export const getAccountInfo = async () => {
@@ -75,11 +65,7 @@ export const getAccountInfo = async () => {
 export const getUser = async () => {
     return axios
         .get("https://localhost:7126/account/user")
-        .then((response) => response.data)
-        .catch(
-            (error) =>
-                error?.response?.data && window.alert(error?.response?.data)
-        );
+        .then((response) => response.data);
 };
 
 export const getBooks = async (searchText: string = "") => {
@@ -102,6 +88,16 @@ export const getReservations = async (searchText: string = "") => {
         .then((response) => response.data);
 };
 
+export const getMyReservations = async (searchText: string = "") => {
+    return axios
+        .get(
+            `https://localhost:7126/myreservations${
+                searchText ? `?searchString=${searchText}` : ""
+            }`
+        )
+        .then((response) => response.data);
+};
+
 export const getBorrowings = async (searchText: string = "") => {
     return axios
         .get(
@@ -116,6 +112,7 @@ export const makeReservation = async (bookId: number, rowVersion: number) => {
     const response = await axios.post(
         `https://localhost:7126/books/${bookId}/reservations?rowVersion=${rowVersion}`
     );
+
     response.status === 200
         ? alert("Reservation made")
         : alert("Reservation failed");
@@ -126,6 +123,7 @@ export const cancelReservation = async (bookId: number, rowVersion: number) => {
     const response = await axios.delete(
         `https://localhost:7126/books/${bookId}/reservations?rowVersion=${rowVersion}`
     );
+
     response.status === 200
         ? alert("Reservation cancelled")
         : alert("Cancellation failed");
@@ -136,6 +134,7 @@ export const borrowBook = async (bookId: number, rowVersion: number) => {
     const response = await axios.post(
         `https://localhost:7126/books/${bookId}/borrowings?rowVersion=${rowVersion}`
     );
+
     response.status === 200
         ? alert("Book borrowed")
         : alert("Borrowing failed");
@@ -146,6 +145,7 @@ export const returnBook = async (bookId: number, rowVersion: number) => {
     const response = await axios.delete(
         `https://localhost:7126/books/${bookId}/borrowings?rowVersion=${rowVersion}`
     );
+
     response.status === 200
         ? alert("Book returned")
         : alert("Returning failed");

@@ -1,7 +1,7 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { Book } from "../../models/Book";
-import { getReservations } from "../../fetches";
+import { getMyReservations } from "../../fetches";
 import { MyReservationRow } from "./MyReservationRow";
 import { SearchBar } from "../../components/SearchBar";
 
@@ -9,7 +9,7 @@ export default function MyReservations() {
     const [reservations, setReservations] = useState<Array<Book>>([]);
 
     const loadReservations = async (searchText: string = "") => {
-        const reservations = await getReservations(searchText);
+        const reservations = await getMyReservations(searchText);
         setReservations(reservations);
     };
 
